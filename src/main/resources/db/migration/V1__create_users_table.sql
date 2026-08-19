@@ -1,0 +1,2 @@
+-- Initial migration
+-- Users table will be created in the next step
