@@ -11,6 +11,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -26,6 +28,9 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private UserService userService;
 
@@ -39,11 +44,14 @@ class UserServiceTest {
         when(userRepository.existsByEmail("test@example.com"))
                 .thenReturn(false);
 
+        when(passwordEncoder.encode("password123"))
+                .thenReturn("hashed-password");
+
         User savedUser = new User();
 
         savedUser.setId(1L);
         savedUser.setEmail("test@example.com");
-        savedUser.setPasswordHash("password123");
+        savedUser.setPasswordHash("hashed-password");
         savedUser.setRole(Role.USER);
 
         LocalDateTime now = LocalDateTime.now();
@@ -65,8 +73,22 @@ class UserServiceTest {
         verify(userRepository)
                 .existsByEmail("test@example.com");
 
+        ArgumentCaptor<User> userCaptor =
+                ArgumentCaptor.forClass(User.class);
+
         verify(userRepository)
-                .save(any(User.class));
+                .save(userCaptor.capture());
+
+        User savedUserArgument = userCaptor.getValue();
+
+        assertThat(savedUserArgument.getPasswordHash())
+                .isEqualTo("hashed-password");
+
+        assertThat(savedUserArgument.getPasswordHash())
+                .isNotEqualTo("password123");
+
+        verify(passwordEncoder)
+                .encode("password123");
     }
 
     @Test

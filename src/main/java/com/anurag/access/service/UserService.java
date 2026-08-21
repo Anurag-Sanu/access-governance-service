@@ -8,6 +8,7 @@ import com.anurag.access.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.anurag.access.exception.DuplicateUserException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 
@@ -15,9 +16,14 @@ import java.time.LocalDateTime;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder) {
+
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -32,7 +38,9 @@ public class UserService {
         User user = new User();
 
         user.setEmail(request.getEmail());
-        user.setPasswordHash(request.getPassword());
+        user.setPasswordHash(
+                passwordEncoder.encode(request.getPassword())
+        );
         user.setRole(Role.USER);
 
         LocalDateTime now = LocalDateTime.now();

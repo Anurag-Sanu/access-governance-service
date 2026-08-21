@@ -3,6 +3,7 @@ package com.anurag.access.controller;
 import com.anurag.access.dto.user.UserResponse;
 import com.anurag.access.entity.Role;
 import com.anurag.access.exception.DuplicateUserException;
+import com.anurag.access.exception.GlobalExceptionHandler;
 import com.anurag.access.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import com.anurag.access.config.SecurityConfig;
 
 import java.time.LocalDateTime;
 
@@ -21,7 +23,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserController.class)
-@Import(com.anurag.access.exception.GlobalExceptionHandler.class)
+@Import({
+        SecurityConfig.class,
+        GlobalExceptionHandler.class
+})
 class UserControllerTest {
 
     @Autowired
