@@ -7,6 +7,7 @@ import com.anurag.access.entity.User;
 import com.anurag.access.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.anurag.access.exception.DuplicateUserException;
 
 import java.time.LocalDateTime;
 
@@ -23,7 +24,7 @@ public class UserService {
     public UserResponse createUser(CreateUserRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException(
+            throw new DuplicateUserException(
                     "User with this email already exists"
             );
         }

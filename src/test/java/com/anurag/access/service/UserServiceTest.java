@@ -4,6 +4,7 @@ import com.anurag.access.dto.user.CreateUserRequest;
 import com.anurag.access.dto.user.UserResponse;
 import com.anurag.access.entity.Role;
 import com.anurag.access.entity.User;
+import com.anurag.access.exception.DuplicateUserException;
 import com.anurag.access.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -81,7 +82,7 @@ class UserServiceTest {
         assertThatThrownBy(
                 () -> userService.createUser(request)
         )
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(DuplicateUserException.class)
                 .hasMessage("User with this email already exists");
 
         verify(userRepository)
