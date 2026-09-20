@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Import;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import com.anurag.access.security.CustomUserDetailsService;
 
 @WebMvcTest(HealthController.class)
 @Import(SecurityConfig.class)
@@ -17,6 +19,9 @@ class HealthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @Test
     void shouldReturnHealthStatus() throws Exception {

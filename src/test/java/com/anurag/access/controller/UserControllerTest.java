@@ -9,11 +9,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import com.anurag.access.config.SecurityConfig;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import com.anurag.access.security.CustomUserDetailsService;
 
 import java.time.LocalDateTime;
 
@@ -37,6 +38,9 @@ class UserControllerTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @Test
     void shouldCreateUser() throws Exception {

@@ -2,9 +2,11 @@ package com.anurag.access;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 //import org.junit.jupiter.api.Disabled;
 
 @SpringBootTest
+@ActiveProfiles("test")
 //@Disabled("Enable after PostgreSQL is configured")
 class AccessGovernanceServiceApplicationTests {
 

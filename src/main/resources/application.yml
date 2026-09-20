@@ -24,3 +24,7 @@ logging:
   level:
     root: INFO
     com.anurag.access: DEBUG
+
+jwt:
+  secret: ${JWT_SECRET:VGhpcy1pcy1hLWxvbmctbG9jYWwtand0LXNlY3JldC1rZXktZm9yLWFjY2Vzcy1nb3Zlcm5hbmNl}
+  expiration-ms: ${JWT_EXPIRATION_MS:3600000}
