@@ -9,6 +9,7 @@ import com.anurag.access.security.CustomAuthenticationEntryPoint;
 import com.anurag.access.security.CustomUserDetailsService;
 import com.anurag.access.security.JwtAuthenticationFilter;
 import com.anurag.access.security.JwtService;
+import com.anurag.access.security.CustomAccessDeniedHandler;
 import com.anurag.access.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         SecurityConfig.class,
         GlobalExceptionHandler.class,
         JwtAuthenticationFilter.class,
-        CustomAuthenticationEntryPoint.class
+        CustomAuthenticationEntryPoint.class,
+        CustomAccessDeniedHandler.class
 })
 class UserControllerTest {
 
