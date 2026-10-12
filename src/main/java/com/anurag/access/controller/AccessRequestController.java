@@ -2,6 +2,7 @@ package com.anurag.access.controller;
 
 import com.anurag.access.dto.accessrequest.AccessRequestResponse;
 import com.anurag.access.dto.accessrequest.CreateAccessRequest;
+import com.anurag.access.dto.accessrequest.ReviewAccessRequest;
 import com.anurag.access.service.AccessRequestService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -60,6 +61,52 @@ public class AccessRequestController {
 
         return ResponseEntity.ok(
                 accessRequestService.getPendingRequests()
+        );
+    }
+
+    @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN')")
+    public ResponseEntity<AccessRequestResponse> approveRequest(
+            @PathVariable Long id,
+            @Valid @RequestBody ReviewAccessRequest review,
+            Authentication authentication) {
+
+        return ResponseEntity.ok(
+                accessRequestService.approveRequest(
+                        id,
+                        authentication.getName(),
+                        review
+                )
+        );
+    }
+
+    @PatchMapping("/{id}/reject")
+    @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN')")
+    public ResponseEntity<AccessRequestResponse> rejectRequest(
+            @PathVariable Long id,
+            @Valid @RequestBody ReviewAccessRequest review,
+            Authentication authentication) {
+
+        return ResponseEntity.ok(
+                accessRequestService.rejectRequest(
+                        id,
+                        authentication.getName(),
+                        review
+                )
+        );
+    }
+
+    @PatchMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<AccessRequestResponse> cancelRequest(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        return ResponseEntity.ok(
+                accessRequestService.cancelRequest(
+                        id,
+                        authentication.getName()
+                )
         );
     }
 }

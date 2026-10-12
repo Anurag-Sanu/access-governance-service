@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.junit.jupiter.api.BeforeEach;
 import org.springframework.test.context.ActiveProfiles;
+import java.util.UUID;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -22,16 +22,13 @@ class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
-    @BeforeEach
-    void cleanDatabase() {
-        userRepository.deleteAllInBatch();
-    }
-
     @Test
     void shouldSaveAndFindUserByEmail() {
 
+        String email = "test-" + UUID.randomUUID() + "@example.com";
+
         User user = new User();
-        user.setEmail("test@example.com");
+        user.setEmail(email);
         user.setPasswordHash("hashed-password");
         user.setRole(Role.USER);
 
@@ -42,11 +39,11 @@ class UserRepositoryTest {
         userRepository.save(user);
 
         Optional<User> result =
-                userRepository.findByEmail("test@example.com");
+                userRepository.findByEmail(email);
 
         assertThat(result).isPresent();
         assertThat(result.get().getEmail())
-                .isEqualTo("test@example.com");
+                .isEqualTo(email);
         assertThat(result.get().getRole())
                 .isEqualTo(Role.USER);
     }
@@ -54,8 +51,11 @@ class UserRepositoryTest {
     @Test
     void shouldCheckIfEmailExists() {
 
+        String email = "test-" + UUID.randomUUID() + "@example.com";
+        String missingEmail = "missing-" + UUID.randomUUID() + "@example.com";
+
         User user = new User();
-        user.setEmail("existing@example.com");
+        user.setEmail(email);
         user.setPasswordHash("hashed-password");
         user.setRole(Role.USER);
 
@@ -63,14 +63,14 @@ class UserRepositoryTest {
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
 
-        userRepository.save(user);
+        userRepository.saveAndFlush(user);
 
         assertThat(
-                userRepository.existsByEmail("existing@example.com")
+                userRepository.existsByEmail(email)
         ).isTrue();
 
         assertThat(
-                userRepository.existsByEmail("missing@example.com")
+                userRepository.existsByEmail(missingEmail)
         ).isFalse();
     }
 }

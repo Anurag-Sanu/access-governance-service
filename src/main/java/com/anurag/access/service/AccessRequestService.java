@@ -11,9 +11,14 @@ import com.anurag.access.exception.ResourceNotFoundException;
 import com.anurag.access.repository.AccessRequestRepository;
 import com.anurag.access.repository.ResourceRepository;
 import com.anurag.access.repository.UserRepository;
+import com.anurag.access.dto.accessrequest.ReviewAccessRequest;
+import com.anurag.access.exception.AccessRequestNotFoundException;
+import com.anurag.access.exception.InvalidAccessRequestStateException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,15 +29,18 @@ public class AccessRequestService {
     private final AccessRequestRepository accessRequestRepository;
     private final UserRepository userRepository;
     private final ResourceRepository resourceRepository;
+    private final AuditService auditService;
 
     public AccessRequestService(
             AccessRequestRepository accessRequestRepository,
             UserRepository userRepository,
-            ResourceRepository resourceRepository) {
+            ResourceRepository resourceRepository,
+            AuditService auditService) {
 
         this.accessRequestRepository = accessRequestRepository;
         this.userRepository = userRepository;
         this.resourceRepository = resourceRepository;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -157,5 +165,128 @@ public class AccessRequestService {
                 request.getReviewedAt(),
                 request.getVersion()
         );
+    }
+
+    @Transactional
+    public AccessRequestResponse approveRequest(
+            Long requestId,
+            String reviewerEmail,
+            ReviewAccessRequest review) {
+
+        return reviewRequest(
+                requestId,
+                reviewerEmail,
+                review,
+                AccessRequestStatus.APPROVED
+        );
+    }
+
+    @Transactional
+    public AccessRequestResponse rejectRequest(
+            Long requestId,
+            String reviewerEmail,
+            ReviewAccessRequest review) {
+
+        return reviewRequest(
+                requestId,
+                reviewerEmail,
+                review,
+                AccessRequestStatus.REJECTED
+        );
+    }
+
+    private AccessRequestResponse reviewRequest(
+            Long requestId,
+            String reviewerEmail,
+            ReviewAccessRequest review,
+            AccessRequestStatus targetStatus) {
+
+        AccessRequest accessRequest = accessRequestRepository
+                .findWithDetailsById(requestId)
+                .orElseThrow(() -> new AccessRequestNotFoundException(
+                        "Access request not found: " + requestId
+                ));
+
+        validatePending(accessRequest);
+
+        User reviewer = userRepository.findByEmail(reviewerEmail)
+                .orElseThrow(() -> new AccessDeniedException(
+                        "Reviewer account not found"
+                ));
+
+        if (accessRequest.getRequester().getId().equals(reviewer.getId())) {
+            throw new AccessDeniedException(
+                    "You cannot approve or reject your own request"
+            );
+        }
+
+        AccessRequestStatus previousStatus = accessRequest.getStatus();
+        LocalDateTime now = LocalDateTime.now();
+
+        accessRequest.setStatus(targetStatus);
+        accessRequest.setReviewedBy(reviewer);
+        accessRequest.setReviewComment(review.comment());
+        accessRequest.setReviewedAt(now);
+        accessRequest.setUpdatedAt(now);
+
+        accessRequestRepository.flush();
+        auditService.recordTransition(
+                accessRequest,
+                reviewer,
+                previousStatus,
+                targetStatus,
+                review.comment()
+        );
+
+        return mapToResponse(accessRequest);
+    }
+
+    @Transactional
+    public AccessRequestResponse cancelRequest(
+            Long requestId,
+            String requesterEmail) {
+
+        AccessRequest accessRequest = accessRequestRepository
+                .findWithDetailsById(requestId)
+                .orElseThrow(() -> new AccessRequestNotFoundException(
+                        "Access request not found: " + requestId
+                ));
+
+        if (!accessRequest.getRequester().getEmail()
+                .equals(requesterEmail)) {
+
+            throw new AccessDeniedException(
+                    "You cannot cancel another user's request"
+            );
+        }
+
+        validatePending(accessRequest);
+
+        AccessRequestStatus previousStatus = accessRequest.getStatus();
+
+        accessRequest.setStatus(AccessRequestStatus.CANCELLED);
+        accessRequest.setUpdatedAt(LocalDateTime.now());
+
+        accessRequestRepository.flush();
+
+        auditService.recordTransition(
+                accessRequest,
+                accessRequest.getRequester(),
+                previousStatus,
+                AccessRequestStatus.CANCELLED,
+                null
+        );
+
+        return mapToResponse(accessRequest);
+    }
+
+    private void validatePending(AccessRequest accessRequest) {
+
+        if (accessRequest.getStatus() != AccessRequestStatus.PENDING) {
+            throw new InvalidAccessRequestStateException(
+                    "Only PENDING requests can be modified. Current status: "
+                            + accessRequest.getStatus()
+            );
+        }
     }
 }

@@ -9,6 +9,8 @@ import org.springframework.security.core.AuthenticationException;
 import com.anurag.access.exception.DuplicateResourceException;
 import com.anurag.access.exception.ResourceNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
+import com.anurag.access.exception.InvalidAccessRequestStateException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.time.LocalDateTime;
 
@@ -156,5 +158,33 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(error);
+    }
+
+    @ExceptionHandler(InvalidAccessRequestStateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidState(
+            InvalidAccessRequestStateException exception) {
+
+        ErrorResponse error = new ErrorResponse(
+                409,
+                "Conflict",
+                exception.getMessage(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(
+            ObjectOptimisticLockingFailureException exception) {
+
+        ErrorResponse error = new ErrorResponse(
+                409,
+                "Conflict",
+                "This request was modified by another transaction. Please refresh and retry.",
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 }
