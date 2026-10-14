@@ -24,6 +24,8 @@ logging:
   level:
     root: INFO
     com.anurag.access: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
 
 jwt:
   secret: ${JWT_SECRET:VGhpcy1pcy1hLWxvbmctbG9jYWwtand0LXNlY3JldC1rZXktZm9yLWFjY2Vzcy1nb3Zlcm5hbmNl}

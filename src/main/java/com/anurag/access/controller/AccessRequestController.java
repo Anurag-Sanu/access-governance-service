@@ -1,17 +1,20 @@
+
 package com.anurag.access.controller;
 
 import com.anurag.access.dto.accessrequest.AccessRequestResponse;
 import com.anurag.access.dto.accessrequest.CreateAccessRequest;
 import com.anurag.access.dto.accessrequest.ReviewAccessRequest;
+import com.anurag.access.dto.common.PagedResponse;
+import com.anurag.access.entity.AccessRequestStatus;
 import com.anurag.access.service.AccessRequestService;
+
 import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/access-requests")
@@ -44,23 +47,40 @@ public class AccessRequestController {
 
     @GetMapping("/my")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<AccessRequestResponse>>
-    getMyRequests(Authentication authentication) {
+    public ResponseEntity<PagedResponse<AccessRequestResponse>>
+    getMyRequests(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false)
+            AccessRequestStatus status,
+            @RequestParam(defaultValue = "desc") String direction) {
 
         return ResponseEntity.ok(
-                accessRequestService.getMyRequests(
-                        authentication.getName()
+                accessRequestService.getMyRequestsPaged(
+                        authentication.getName(),
+                        status,
+                        page,
+                        size,
+                        direction
                 )
         );
     }
 
     @GetMapping("/pending")
     @PreAuthorize("hasAnyRole('APPROVER', 'ADMIN')")
-    public ResponseEntity<List<AccessRequestResponse>>
-    getPendingRequests() {
+    public ResponseEntity<PagedResponse<AccessRequestResponse>>
+    getPendingRequests(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "asc") String direction) {
 
         return ResponseEntity.ok(
-                accessRequestService.getPendingRequests()
+                accessRequestService.getPendingRequestsPaged(
+                        page,
+                        size,
+                        direction
+                )
         );
     }
 
@@ -110,3 +130,4 @@ public class AccessRequestController {
         );
     }
 }
+

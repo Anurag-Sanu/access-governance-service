@@ -11,6 +11,7 @@ import com.anurag.access.exception.ResourceNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 import com.anurag.access.exception.InvalidAccessRequestStateException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 
@@ -186,5 +187,33 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException ex) {
+
+        return ResponseEntity.badRequest().body(
+                new ErrorResponse(
+                        400,
+                        "Bad Request",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex) {
+
+        return ResponseEntity.badRequest().body(
+                new ErrorResponse(
+                        400,
+                        "Bad Request",
+                        "Invalid value for parameter: " + ex.getName(),
+                        LocalDateTime.now()
+                )
+        );
     }
 }

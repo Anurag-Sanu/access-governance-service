@@ -18,6 +18,11 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.anurag.access.dto.common.PagedResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 
 import java.time.LocalDateTime;
@@ -288,5 +293,82 @@ public class AccessRequestService {
                             + accessRequest.getStatus()
             );
         }
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponse<AccessRequestResponse> getMyRequestsPaged(
+            String requesterEmail,
+            AccessRequestStatus status,
+            int page,
+            int size,
+            String sortDirection
+    ) {
+        User requester = userRepository.findByEmail(requesterEmail)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException(
+                                "Authenticated user not found"
+                        )
+                );
+
+        Pageable pageable = buildPageable(page, size, sortDirection);
+
+        Page<AccessRequest> requests;
+
+        if (status == null) {
+            requests = accessRequestRepository.findByRequesterId(requester.getId(), pageable);
+        } else {
+            requests = accessRequestRepository.findByRequesterIdAndStatus(requester.getId(), status, pageable);
+        }
+
+        return PagedResponse.from(requests, this::mapToResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponse<AccessRequestResponse> getPendingRequestsPaged(
+            int page,
+            int size,
+            String sortDirection
+    ) {
+        Pageable pageable = buildPageable(page, size, sortDirection);
+
+        Page<AccessRequest> requests =
+                accessRequestRepository.findByStatus(AccessRequestStatus.PENDING, pageable);
+
+        return PagedResponse.from(requests, this::mapToResponse);
+    }
+
+    private Pageable buildPageable(
+            int page,
+            int size,
+            String direction
+    ) {
+        if (page < 0) {
+            throw new IllegalArgumentException(
+                    "Page number cannot be negative"
+            );
+        }
+
+        if (size < 1 || size > 100) {
+            throw new IllegalArgumentException(
+                    "Page size must be between 1 and 100"
+            );
+        }
+
+        Sort.Direction sortDirection;
+
+        try {
+            sortDirection = Sort.Direction.fromString(direction);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(
+                    "Direction must be 'asc' or 'desc'"
+            );
+        }
+
+        Sort sort = Sort.by(
+                sortDirection,
+                "createdAt"
+        ).and(Sort.by(sortDirection, "id"));
+
+        return PageRequest.of(page, size, sort);
     }
 }
